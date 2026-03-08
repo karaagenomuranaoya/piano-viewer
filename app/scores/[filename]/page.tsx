@@ -1,24 +1,25 @@
-// 修正前
-// import PdfViewer from "@/components/PdfViewer";
-
-// 修正後：dynamic importを使ってSSRを無効化する
 import dynamic from "next/dynamic";
 
+// SSR無効化設定はそのまま
 const PdfViewer = dynamic(() => import("@/components/PdfViewer"), {
-  ssr: false, // サーバー側でレンダリングしない（ブラウザのみで実行）
+  ssr: false,
   loading: () => <div className="text-white p-4">Viewer Loading...</div>,
 });
 
-// next.js 15+ の場合、paramsはPromiseになる可能性がありますが
-// 一旦標準的な書き方で書きます。エラーが出る場合は await params に修正してください。
-export default async function ScorePage({ params }: { params: { filename: string } }) {
-  // URLデコード (日本語ファイル名対応)
+// ★修正ポイント: params の型定義を Promise に変更
+interface Props {
+  params: Promise<{ filename: string }>;
+}
+
+export default async function ScorePage(props: Props) {
+  // ★修正ポイント: await で中身を取り出す
+  const params = await props.params;
+  
   const filename = decodeURIComponent(params.filename);
   
   return (
     <main>
-      {/* PDFファイルは public/scores/ にある前提 */}
-      <PdfViewer file={`/scores/${filename}`} />
+       <PdfViewer file={`/scores/${filename}`} />
     </main>
   );
 }
