@@ -1,16 +1,15 @@
-// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // サーバーサイドでのビルド時に pdfjs-dist の中身を解析させない設定
   serverExternalPackages: ["pdfjs-dist"],
 
-  webpack: (config: any) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      canvas: false,
-      encoding: false, // canvas と encoding の無視だけでOK
-    };
+  webpack: (config) => {
+    // ★修正ポイント: スプレッド構文を使わず、直接プロパティに false を代入する
+    if (!config.resolve.alias) {
+      config.resolve.alias = {};
+    }
+    config.resolve.alias.canvas = false;
+    config.resolve.alias.encoding = false;
 
     return config;
   },
