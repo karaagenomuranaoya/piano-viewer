@@ -5,12 +5,8 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 
-// ★修正ポイント: Next.js環境における最新の公式推奨ワーカー設定
-// import.meta.url を使うことで、Webpackが自動でワーカーファイルをバンドルしてくれます
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+// ★ publicフォルダに置いたワーカーを直接指定（一番軽くて安定します）
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 interface Props {
   file: string;
@@ -39,7 +35,6 @@ export default function PdfViewer({ file }: Props) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // JSX部分はそのまま変更なし
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-900 text-white overflow-hidden">
       <div className="fixed inset-0 z-10 flex">
