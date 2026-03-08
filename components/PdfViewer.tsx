@@ -8,7 +8,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 // PDFワーカーの設定 (CDNを使うのが一番安定して早いです)
 // pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+// pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 
 interface Props {
@@ -21,11 +21,11 @@ export default function PdfViewer({ file }: Props) {
   const [windowWidth, setWindowWidth] = useState<number>(800);
 
   // ウィンドウサイズに合わせてPDFの幅を調整（レスポンシブ対応）
+  // ★修正後：useEffectの中で設定する（これでブラウザでしか実行されない）
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize(); // 初期実行
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    if (typeof window !== "undefined") {
+      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    }
   }, []);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
@@ -41,19 +41,13 @@ export default function PdfViewer({ file }: Props) {
     });
   }, [numPages]);
 
-  // キーボード操作対応 (スペース/右矢印で進む、左矢印で戻る)
+  // ウィンドウサイズに合わせてPDFの幅を調整（レスポンシブ対応）
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space" || event.code === "ArrowRight") {
-        event.preventDefault(); // スクロール防止
-        changePage(1);
-      } else if (event.code === "ArrowLeft") {
-        changePage(-1);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [changePage]);
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    handleResize(); // 初期実行
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-900 text-white overflow-hidden">
