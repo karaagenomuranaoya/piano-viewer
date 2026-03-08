@@ -1,3 +1,4 @@
+// components/PdfViewer.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -5,11 +6,8 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 
-// PDFワーカーの設定 (CDNを使うのが一番安定して早いです)
-// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-
-// pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-
+// ★修正ポイント: useEffectの外（トップレベル）でCDNから .mjs のワーカーを読み込む
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface Props {
   file: string;
@@ -20,13 +18,7 @@ export default function PdfViewer({ file }: Props) {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [windowWidth, setWindowWidth] = useState<number>(800);
 
-  // ウィンドウサイズに合わせてPDFの幅を調整（レスポンシブ対応）
-  // ★修正後：useEffectの中で設定する（これでブラウザでしか実行されない）
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-    }
-  }, []);
+  // （以前ここにあった useEffect での workerSrc 設定は削除しました）
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -36,12 +28,11 @@ export default function PdfViewer({ file }: Props) {
   const changePage = useCallback((offset: number) => {
     setPageNumber((prevPageNumber) => {
       const newPage = prevPageNumber + offset;
-      // 範囲外に行かないように制限
       return Math.max(1, Math.min(newPage, numPages));
     });
   }, [numPages]);
 
-  // ウィンドウサイズに合わせてPDFの幅を調整（レスポンシブ対応）
+  // ウィンドウサイズに合わせてPDFの幅を調整
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     handleResize(); // 初期実行
@@ -53,13 +44,11 @@ export default function PdfViewer({ file }: Props) {
     <div className="flex flex-col items-center min-h-screen bg-gray-900 text-white overflow-hidden">
       {/* クリックエリア (透明なオーバーレイ) */}
       <div className="fixed inset-0 z-10 flex">
-        {/* 左半分クリックで戻る */}
         <div 
           className="w-1/2 h-full cursor-w-resize" 
           onClick={() => changePage(-1)}
           title="前のページへ"
         />
-        {/* 右半分クリックで進む */}
         <div 
           className="w-1/2 h-full cursor-e-resize" 
           onClick={() => changePage(1)}
@@ -76,10 +65,10 @@ export default function PdfViewer({ file }: Props) {
         >
           <Page 
             pageNumber={pageNumber} 
-            width={windowWidth > 1000 ? 1000 : windowWidth} // 最大幅制限
-            renderTextLayer={false} // ★軽量化: テキスト選択無効
-            renderAnnotationLayer={false} // ★軽量化: リンク等無効
-            loading="" // ページ切替時のチラつき防止のため空文字
+            width={windowWidth > 1000 ? 1000 : windowWidth}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+            loading=""
           />
         </Document>
       </div>
